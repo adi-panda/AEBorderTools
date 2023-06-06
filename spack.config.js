@@ -6,7 +6,7 @@ module.exports = config({
   },
   output: {
     path: __dirname + "/dist",
-    name: "script.jsx",
+    name: "AEBorderTools.jsx",
   },
   module: {},
 });
