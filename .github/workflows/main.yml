@@ -1,4 +1,4 @@
-name: ZXP Release
+name: JSX Build Release
 
 on:
   push:
