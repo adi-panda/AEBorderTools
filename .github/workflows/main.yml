@@ -12,7 +12,18 @@ jobs:
   build:
     runs-on: windows-latest
 
+    strategy:
+      matrix:
+        node-version: [18.x]
     steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm i
+      - run: npm run build
+
       - name: GitHub Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
@@ -22,4 +33,4 @@ jobs:
           SOURCE_BRANCH: ${{ steps.extract_names.outputs.SOURCE_BRANCH }}
           SOURCE_TAG: ${{ steps.extract_names.outputs.SOURCE_TAG }}
         with:
-          files: ./dist/AEBorderTools.jsx
+          files: ./dist/zxp/com.bolt.cep.zxp
