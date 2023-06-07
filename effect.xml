@@ -1,0 +1,13 @@
+<Effect matchname="Pseudo/YourCustomControl_v1" name="$$$/AE/Preset/YourCustomControlName=Border Controller">
+    
+    <Group name="$$$/AE/Preset/CustomGroupName=Points">
+      <Layer name="$$$/AE/Preset/CustomLayerName=Custom Layer Name" default_self="false"/>
+      <Point name="$$$/AE/Preset/CustomPointName=Point 1" default_x="0" default_y="0"/>
+      <Point name="$$$/AE/Preset/CustomPointName=Point 2" default_x="0" default_y="0"/>
+      <Point name="$$$/AE/Preset/CustomPointName=Point 3" default_x="0" default_y="0"/>
+      <Point name="$$$/AE/Preset/CustomPointName=Point 4" default_x="0" default_y="0"/>
+    </Group>
+    <Slider name="$$$/AE/Preset/CustomSliderName=Custom Slider Name" default="0" valid_min="-100" valid_max="100" slider_min="-10" slider_max="10" precision="2"/>
+    <Checkbox name="$$$/AE/Preset/CustomCheckboxName=Custom Checkbox Name" checked="false"/>
+    <Color name="$$$/AE/Preset/CustomColorName=Custom Color Name" default_red="255" default_green="0" default_blue="0"/>
+</Effect>

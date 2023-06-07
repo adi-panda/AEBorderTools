@@ -1,3 +1,5 @@
+import {applyBorderPreset} from "./Apply Pseudo Effect as Animation Preset";
+
 const isolateBorder = (border : ShapeLayer): Layer => {
   var newLay = border.duplicate();
   newLay.name = "borderDuplicate";
@@ -30,6 +32,7 @@ const recursiveBorderCreation = (iteration : number, selectedShapeLayer : ShapeL
     newLayer.remove();
     return;
   }
+  
   app.beginUndoGroup("Undo2");
   var newShape = newLayer.property("Contents");
   newLayer.name = newShape.property(counter).name;
@@ -43,7 +46,7 @@ const recursiveBorderCreation = (iteration : number, selectedShapeLayer : ShapeL
       }
     }
   }
-  $.writeln("tse");
+
   var baseLayerDuplicate = baseLayer.duplicate();
   baseLayerDuplicate.moveAfter(newLayer);
   var borderPosition =  newLayer.property("Contents")(1)("Transform")("Position");
@@ -58,7 +61,6 @@ const recursiveBorderCreation = (iteration : number, selectedShapeLayer : ShapeL
     borderPosition.setValue([0,0]);
   }
 
-  $.writeln("huh!dsada" + iteration);
   var borderPath = newLayer.property("Contents")(1)("Contents")(1);
   app.executeCommand(2004); //deselct all
   borderPath.selected = true;
@@ -77,7 +79,7 @@ const recursiveBorderCreation = (iteration : number, selectedShapeLayer : ShapeL
       if(borderPath instanceof Property){
         originalPointVertices = borderPath.value.vertices;
         for (var originalPointCount = 1; originalPointCount <= originalPointVertices.length; originalPointCount++) {
-          pointNames.push(`comp("${comp.name}").layer("🔥${newLayer.name}").effect("Point ${originalPointCount}")("Point")`);
+          pointNames.push(`fromComp(comp("${comp.name}").layer("🔥${newLayer.name}").effect("Pseudo/YourCustomControl_v1")("Point ${originalPointCount}").value)`);
         }
         borderPath.expression = `createPath(points = [${pointNames}], inTangents = [], outTangents = [], isClosed = true)`;
       }
@@ -96,18 +98,14 @@ const recursiveBorderCreation = (iteration : number, selectedShapeLayer : ShapeL
       comp.layers[currentLayerIndex].position.setValue([oldPosition[0] + xTransformDistance, oldPosition[1] + yTransformDistance]);
 
 
-      var currentBorderLayerEffects = comp.layers[currentLayerIndex].property("ADBE Effect Parade");
-
-      if(currentBorderLayerEffects instanceof PropertyGroup){
-        for (var originalPointCount = 1; originalPointCount <= originalPointVertices.length; originalPointCount++) {
-          var point = currentBorderLayerEffects.addProperty("ADBE Point Control");
-          point.name = "Point " + originalPointCount;
-          var pointVal = point.property("ADBE Point Control-0001");
-          if(pointVal instanceof Property){
-            pointVal.setValue(originalPointVertices[originalPointCount - 1]);
-          }
+      applyBorderPreset(comp.layers[currentLayerIndex]);
+      for (var originalPointCount = 1; originalPointCount <= originalPointVertices.length; originalPointCount++) {
+        var pointVal = comp.layers[currentLayerIndex].property("ADBE Effect Parade")("Pseudo/YourCustomControl_v1")("Point " + originalPointCount);
+        if(pointVal instanceof Property){
+          pointVal.setValue(selectedShapeLayer.sourcePointToComp(originalPointVertices[originalPointCount - 1]));
         }
       }
+      
 
       currentLayerIndex++;
       
