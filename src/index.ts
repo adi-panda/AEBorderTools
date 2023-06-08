@@ -46,7 +46,7 @@ const recursiveBorderCreation = (iteration : number, selectedShapeLayer : ShapeL
       }
     }
   }
-
+  
   var baseLayerDuplicate = baseLayer.duplicate();
   baseLayerDuplicate.moveAfter(newLayer);
   var borderPosition =  newLayer.property("Contents")(1)("Transform")("Position");
@@ -76,8 +76,10 @@ const recursiveBorderCreation = (iteration : number, selectedShapeLayer : ShapeL
       var originalPointVertices = [];
       var pointNames = [];
       borderPath = borderDuplicate.property("Contents")(1)("Contents")(1)("Path");
+      //@ts-ignore
+      originalPointVertices = borderPath.value.vertices;
+
       if(borderPath instanceof Property){
-        originalPointVertices = borderPath.value.vertices;
         for (var originalPointCount = 1; originalPointCount <= originalPointVertices.length; originalPointCount++) {
           pointNames.push(`fromComp(comp("${comp.name}").layer("🔥${newLayer.name}").effect("Pseudo/YourCustomControl_v1")("Point ${originalPointCount}").value)`);
         }
@@ -99,13 +101,55 @@ const recursiveBorderCreation = (iteration : number, selectedShapeLayer : ShapeL
 
 
       applyBorderPreset(comp.layers[currentLayerIndex]);
+      
+      var addExpression = true;
       for (var originalPointCount = 1; originalPointCount <= originalPointVertices.length; originalPointCount++) {
-        var pointVal = comp.layers[currentLayerIndex].property("ADBE Effect Parade")("Pseudo/YourCustomControl_v1")("Point " + originalPointCount);
+        var pointVal = comp.layers[currentLayerIndex].property("ADBE Effect Parade")("Pseudo/YourCustomControl_v1")("Point " + originalPointCount );
         if(pointVal instanceof Property){
           pointVal.setValue(selectedShapeLayer.sourcePointToComp(originalPointVertices[originalPointCount - 1]));
+          originalPointVertices[originalPointCount - 1] = selectedShapeLayer.sourcePointToComp(originalPointVertices[originalPointCount - 1]);
+          if(addExpression){
+            pointVal.expression = ` var top = effect("Pseudo/YourCustomControl_v1")("Top") / 100;
+                                    var bottom = effect("Pseudo/YourCustomControl_v1")("Bottom") / 100;
+                                    var left = effect("Pseudo/YourCustomControl_v1")("Left") / 100;
+                                    var right = effect("Pseudo/YourCustomControl_v1")("Right") / 100;
+
+                                    var p1x = ${originalPointVertices[0][0]};
+                                    var p1y = ${originalPointVertices[0][1]};
+                                    var p2x = ${originalPointVertices[1][0]};
+                                    var p2y = ${originalPointVertices[1][1]};
+                                    var p3x = ${originalPointVertices[2][0]};
+                                    var p3y = ${originalPointVertices[2][1]};
+                                    var p4x = ${originalPointVertices[3][0]};
+                                    var p4y = ${originalPointVertices[3][1]};
+
+                                    var minX = Math.min(p1x, p2x, p3x, p4x);
+                                    var maxX = Math.max(p1x, p2x, p3x, p4x);
+                                    var initialWidth = maxX - minX;
+
+                                    var minY = Math.min(p1y, p2y, p3y, p4y)
+                                    var maxY = Math.max(p1y, p2y, p3y, p4y)
+                                    var initialHeight = maxY - minY
+
+                                    var newWidth = initialWidth * (1 - left - right);
+                                    var newHeight = initialHeight * (1 - top - bottom);
+                                  
+                                    newX1 = p1x + newWidth * left;
+                                    newY1 = p1y + newHeight * top;
+                                    newX2 = p2x - newWidth * right;
+                                    newY2 = p2y - newHeight * bottom;
+                                    newX3 = p3x + newWidth * left;
+                                    newY3 = p3y - newHeight * bottom;
+                                    newX4 = p4x - newWidth * right;
+                                    newY4 = p4y + newHeight * top;
+                                    [newX${originalPointCount}, newY${originalPointCount}];
+
+                                  `;
+
+          }
+        
         }
       }
-      
 
       currentLayerIndex++;
       
