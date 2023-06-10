@@ -38,17 +38,17 @@ const recursiveBorderCreation = (
 ) => {
   //alert('iteration: ' + iteration + ' counter: ' + counter + ' currentLayerIndex: ' + currentLayerIndex + ' newLayer: ' + newLayer.name +
   //                          ' selectedShapeLayer: ' + selectedShapeLayer.name + ' baseLayer: ' + baseLayer.name);
+  app.beginUndoGroup("Undo2");
   if (iteration == 1) {
     //alert("done");
-    app.beginUndoGroup("Undo1");
     selectedShapeLayer.remove();
     //alert(baseLayer.name);
     baseLayer.remove();
     newLayer.remove();
+    app.endUndoGroup();
     return;
   }
 
-  app.beginUndoGroup("Undo2");
   var newShape = newLayer.property("Contents");
   newLayer.name = newShape.property(counter).name;
 
@@ -84,6 +84,7 @@ const recursiveBorderCreation = (
   borderPath.selected = true;
 
   app.executeCommand(4162); //convert to bezier path
+  app.endUndoGroup();
   if (iteration > 1) {
     // Schedule the next iteration using setTimeout
     app.setTimeout(function () {
@@ -93,6 +94,14 @@ const recursiveBorderCreation = (
       var borderDuplicate = isolateBorder(newLayer);
       var originalPointVertices = [];
       var pointNames = [];
+      var borderWidth = 0;
+      var borderStrokeWidthProp =
+        newLayer.property("Contents")(1)("Contents")("Stroke 1")(
+          "Stroke Width"
+        );
+      if (borderStrokeWidthProp instanceof Property)
+        borderStrokeWidthProp = borderWidth = borderStrokeWidthProp.value;
+
       borderPath =
         borderDuplicate.property("Contents")(1)("Contents")(1)("Path");
       //@ts-ignore
@@ -136,7 +145,7 @@ const recursiveBorderCreation = (
         "Pseudo/YourCustomControl_v1"
       );
 
-      var addExpression = true;
+      var addExpression = false;
       for (
         var originalPointCount = 1;
         originalPointCount <= originalPointVertices.length;
@@ -174,7 +183,7 @@ const recursiveBorderCreation = (
                                     var maxX = Math.max(p1x, p2x, p3x, p4x);
                                     var initialWidth = maxX - minX;
 
-                                    var minY = Math.min(p1y, p2y, p3y, p4y)
+                                    var minY = Math.min(p1y, p2y, p3y, p4y) 
                                     var maxY = Math.max(p1y, p2y, p3y, p4y)
                                     var initialHeight = maxY - minY
 
@@ -195,10 +204,50 @@ const recursiveBorderCreation = (
           }
         }
       }
+      var layerMasks =
+        comp.layers[currentLayerIndex].property("ADBE Mask Parade");
+
+      if (layerMasks instanceof PropertyGroup) {
+        layerMasks.addProperty("ADBE Mask Atom");
+      }
+      var mask = layerMasks.property(1);
+      var expansionDirections = [
+        [1, -1],
+        [1, 1],
+        [-1, 1],
+        [-1, -1],
+      ];
+
+      for (
+        var pointNameCount = 0;
+        pointNameCount < pointNames.length;
+        pointNameCount++
+      ) {
+        pointNames[pointNameCount] =
+          "var originalPoint = " +
+          pointNames[pointNameCount] +
+          ";\n" +
+          `var point${
+            pointNameCount + 1
+          } = [(originalPoint[0] + (transform.position[0] - thisComp.width/2)) + ${
+            borderWidth * expansionDirections[pointNameCount][0]
+          }, 
+          (originalPoint[1] + (transform.position[1] - thisComp.height/2)) + ${
+            borderWidth * expansionDirections[pointNameCount][1]
+          }];`;
+      }
+      if (mask instanceof MaskPropertyGroup) {
+        mask.maskShape.expression = `${pointNames[0]};
+                                     ${pointNames[1]};
+                                     ${pointNames[2]};
+                                     ${pointNames[3]};
+                                    createPath(points = [point1, point2, point3, point4], inTangents = [], outTangents = [], isClosed = true)`;
+      }
 
       currentLayerIndex++;
 
       //alert("test" + selectedShapeLayer.name);
+      app.endUndoGroup();
       recursiveBorderCreation(
         iteration - 1,
         selectedShapeLayer,
@@ -214,7 +263,6 @@ const recursiveBorderCreation = (
 };
 
 (function testScript() {
-  app.beginUndoGroup("Test Script");
   if (app.project.activeItem instanceof CompItem) {
     var comp = app.project.activeItem;
 
